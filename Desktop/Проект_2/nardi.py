@@ -72,7 +72,6 @@ class Board:
         if cvet == 0:
             if cherniy[kletk - 3] == 1:
                 posic1[0] += 1
-                k = Cherniy.game_process(self, posic1[0], kletk)
         else:
             if beliy[kletk] == 1:
                 return True
@@ -137,6 +136,7 @@ class Beliy(pygame.sprite.Sprite):
             self.rect.y = event.pos[1] - 20
 
     def otgat(self):
+        self.hod_prois = False
         if self.kletk == 13:
             self.rasp = 0
         if self.rasp == 1:
@@ -145,7 +145,7 @@ class Beliy(pygame.sprite.Sprite):
             t = a1 - 61 <= self.rect.x < a1 + 62
             m = 42 <= self.rect.y <= 476
             if t and m and a:
-                p = Board.poed(self, self.kletk, self.cvet)
+                self.hod_prois = True
                 hod = Board.vozvrat(self, self.kletk, self.cvet)
                 self.kletk -= 1
                 self.x = a1
@@ -158,7 +158,7 @@ class Beliy(pygame.sprite.Sprite):
             t = a1 - 61 <= self.rect.x < a1 + 62
             m = 538 <= self.rect.y <= 910
             if t and m and a:
-                p = Board.poed(self, self.kletk, self.cvet)
+                self.hod_prois = True
                 hod = Board.vozvrat(self, self.kletk, self.cvet)
                 self.kletk -= 1
                 self.x = a1
@@ -174,13 +174,8 @@ class Beliy(pygame.sprite.Sprite):
         self.rect.topleft = self.x, self.y
         self.f = False
 
-    def game_process(self, hod, b):
-        print(1)
-        if self.kletk == b:
-            self. kletk = 25
-            self.y = 42 + 62 * s
-            self.x = 472
-            self.rect.topleft = self.x, self.y
+    def game_process(self):
+        return self.hod_prois
 
 
 class Cherniy(pygame.sprite.Sprite):
@@ -216,6 +211,7 @@ class Cherniy(pygame.sprite.Sprite):
             self.rect.y = event.pos[1] - 20
 
     def otgat(self):
+        self.hod_prois = False
         if self.kletk == 12:
             self.rasp = 1
         if self.rasp == 1:
@@ -224,7 +220,7 @@ class Cherniy(pygame.sprite.Sprite):
             t = a1 - 61 <= self.rect.x < a1 + 62
             m = self.rect.y <= 476
             if t and m and a:
-                p = Board.poed(self, self.kletk, self.cvet)
+                self.hod_prois = True
                 hod = Board.vozvrat(self, self.kletk, self.cvet)
                 self.kletk += 1
                 self.x = a1
@@ -242,7 +238,7 @@ class Cherniy(pygame.sprite.Sprite):
             t = a1 - 61 <= self.rect.x < a1 + 62
             m = 538 <= self.rect.y
             if t and m and a:
-                p = Board.poed(self, self.kletk, self.cvet)
+                self.hod_prois = True
                 hod = Board.vozvrat(self, self.kletk, self.cvet)
                 self.kletk += 1
                 self.x = a1
@@ -253,12 +249,8 @@ class Cherniy(pygame.sprite.Sprite):
         self.rect.topleft = self.x, self.y
         self.f = False
 
-    def game_process(self, hod, b):
-        if self.kletk == b:
-            self. kletk = 0
-            self.y = 910 - hod * 62
-            self.x = 472
-            self.rect.topleft = self.x, self.y
+    def game_process(self):
+        return self.hod_prois
 
 
 class arrow(pygame.sprite.Sprite):
@@ -274,76 +266,123 @@ class arrow(pygame.sprite.Sprite):
 
 
 class kubik:
-    def __init__(self, a, b):
+    def __init__(self, a, b, cvet):
         self.a = a
         self.b = b
+        self.cvet = cvet
 
     def brosok(self):
+        if self.cvet == 0:
+            a1 = 239
+            b1 = 302
+        else:
+            a1 = 701
+            b1 = 764
         if self.a == 1:
-            pygame.draw.circle(screen, pygame.Color("black"), [239, 507], 7)
+            pygame.draw.circle(screen, pygame.Color("black"), [a1, 507], 7)
 
         elif self.a == 2:
-            pygame.draw.circle(screen, pygame.Color("black"), [259, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [219, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 + 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 - 20, 527], 7)
 
         elif self.a == 3:
-            pygame.draw.circle(screen, pygame.Color("black"), [259, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [219, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [239, 507], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 + 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 - 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"), [a1, 507], 7)
 
         elif self.a == 4:
-            pygame.draw.circle(screen, pygame.Color("black"), [259, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [219, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [219, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [259, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 + 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 - 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 - 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 + 20, 527], 7)
 
         elif self.a == 5:
-            pygame.draw.circle(screen, pygame.Color("black"), [259, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [219, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [219, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [259, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [239, 507], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 + 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 - 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 - 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 + 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1, 507], 7)
 
         elif self.a == 6:
-            pygame.draw.circle(screen, pygame.Color("black"), [259, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [219, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [219, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [259, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [219, 507], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [259, 507], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 + 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 - 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 - 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 + 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 - 20, 507], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [a1 + 20, 507], 7)
 
         if self.b == 1:
-            pygame.draw.circle(screen, pygame.Color("black"), [301, 507], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1, 507], 7)
 
         elif self.b == 2:
-            pygame.draw.circle(screen, pygame.Color("black"), [281, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [321, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 - 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 + 20, 487], 7)
 
         elif self.b == 3:
-            pygame.draw.circle(screen, pygame.Color("black"), [281, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [321, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [301, 507], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 - 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 + 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1, 507], 7)
 
         elif self.b == 4:
-            pygame.draw.circle(screen, pygame.Color("black"), [281, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [321, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [321, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [281, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 - 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 + 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 + 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 - 20, 487], 7)
 
         elif self.b == 5:
-            pygame.draw.circle(screen, pygame.Color("black"), [281, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [321, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [321, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [281, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [301, 507], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 - 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 + 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 + 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 - 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1, 507], 7)
 
         elif self.b == 6:
-            pygame.draw.circle(screen, pygame.Color("black"), [281, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [321, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [321, 527], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [281, 487], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [281, 507], 7)
-            pygame.draw.circle(screen, pygame.Color("black"), [321, 507], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 - 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 + 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 + 20, 527], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 - 20, 487], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 - 20, 507], 7)
+            pygame.draw.circle(screen, pygame.Color("black"),
+                               [b1 + 20, 507], 7)
 
 
 all_sprites = pygame.sprite.Group()
@@ -396,7 +435,12 @@ zone.set_view(472, 42, 62)
 konec = Board(1, 15)
 konec.set_view(934, 42, 62)
 cursor = arrow()
-kub = kubik(choice((1, 2, 3, 4, 5, 6)), choice((1, 2, 3, 4, 5, 6)))
+kub1 = choice((1, 2, 3, 4, 5, 6))
+kub2 = choice((1, 2, 3, 4, 5, 6))
+cvet = 0
+kub = kubik(kub1, kub2, cvet)
+nomer_hoda = 1
+hod_prois = False
 
 pygame.mouse.set_cursor((8, 8), (0, 0), (0, 0, 0, 0, 0, 0, 0, 0),
                         (0, 0, 0, 0, 0, 0, 0, 0))
@@ -408,8 +452,10 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
+            if nomer_hoda % 2 == 1:
                 for k in all_sprites2:
                     k.nagat(event)
+            else:
                 for k in all_sprites3:
                     k.nagat(event)
         if event.type == pygame.MOUSEMOTION:
@@ -424,10 +470,24 @@ while running:
         if event.type == pygame.MOUSEBUTTONUP:
             for k in all_sprites2:
                 k.otgat()
+                hod_prois += k.game_process()
+                kub1 = choice((1, 2, 3, 4, 5, 6))
+                kub2 = choice((1, 2, 3, 4, 5, 6))
 
             for k in all_sprites3:
                 k.otgat()
-            kub = kubik(choice((1, 2, 3, 4, 5, 6)), choice((1, 2, 3, 4, 5, 6)))
+                hod_prois += k.game_process()
+                kub1 = choice((1, 2, 3, 4, 5, 6))
+                kub2 = choice((1, 2, 3, 4, 5, 6))
+            if hod_prois >= 1:
+                if nomer_hoda % 2 == 1:
+                    cvet = 1
+                else:
+                    cvet = 0
+                kub = kubik(kub1, kub2, cvet)
+    if hod_prois >= 1:
+        nomer_hoda += 1
+        hod_prois = False
     screen.fill((0, 0, 0))
     all_sprites.draw(screen)
     all_sprites.update()
@@ -435,10 +495,12 @@ while running:
     all_sprites2.update()
     all_sprites3.draw(screen)
     all_sprites3.update()
-    pygame.draw.rect(screen, pygame.Color('white'), (208, 476, 62, 62), 0)
-    pygame.draw.rect(screen, pygame.Color('white'), (270, 476, 62, 62), 0)
-    pygame.draw.rect(screen, pygame.Color('white'), (670, 476, 62, 62), 0)
-    pygame.draw.rect(screen, pygame.Color('white'), (732, 476, 62, 62), 0)
+    if nomer_hoda % 2 == 1:
+        pygame.draw.rect(screen, pygame.Color('white'), (208, 476, 62, 62), 0)
+        pygame.draw.rect(screen, pygame.Color('white'), (271, 476, 62, 62), 0)
+    else:
+        pygame.draw.rect(screen, pygame.Color('white'), (670, 476, 62, 62), 0)
+        pygame.draw.rect(screen, pygame.Color('white'), (733, 476, 62, 62), 0)
     kub.brosok()
     if pygame.mouse.get_focused():
         all_sprites1.draw(screen)
