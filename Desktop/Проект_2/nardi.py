@@ -5,6 +5,7 @@ from random import choice
 pygame.init()
 size = 1000, 1000
 screen = pygame.display.set_mode(size)
+pygame.display.set_caption("Нарды")
 color = pygame.Color('white')
 
 
@@ -440,11 +441,18 @@ kub2 = choice((1, 2, 3, 4, 5, 6))
 cvet = 0
 kub = kubik(kub1, kub2, cvet)
 nomer_hoda = 1
+font = pygame.font.Font('freesansbold.ttf', 50)
+orig_surf = font.render('Ход белых', True, (255, 255, 255))
+txt_surf = orig_surf.copy()
+alpha_surf = pygame.Surface(txt_surf.get_size(),
+                            pygame.SRCALPHA)
+alpha = 255
 hod_prois = False
 
 pygame.mouse.set_cursor((8, 8), (0, 0), (0, 0, 0, 0, 0, 0, 0, 0),
                         (0, 0, 0, 0, 0, 0, 0, 0))
 
+clock = pygame.time.Clock()
 running = True
 
 while running:
@@ -481,9 +489,23 @@ while running:
                 kub2 = choice((1, 2, 3, 4, 5, 6))
             if hod_prois >= 1:
                 if nomer_hoda % 2 == 1:
+                    font = pygame.font.Font('freesansbold.ttf', 50)
+                    orig_surf = font.render('Ход чёрных', True, (0, 0, 0))
+                    txt_surf = orig_surf.copy()
+                    alpha_surf = pygame.Surface(txt_surf.get_size(),
+                                                pygame.SRCALPHA)
+                    alpha = 255
+
                     cvet = 1
                 else:
                     cvet = 0
+                    font = pygame.font.Font('freesansbold.ttf', 50)
+                    orig_surf = font.render('Ход белых', True, (255, 255, 255))
+                    txt_surf = orig_surf.copy()
+                    alpha_surf = pygame.Surface(txt_surf.get_size(),
+                                                pygame.SRCALPHA)
+                    alpha = 255
+
                 kub = kubik(kub1, kub2, cvet)
     if hod_prois >= 1:
         nomer_hoda += 1
@@ -498,12 +520,27 @@ while running:
     if nomer_hoda % 2 == 1:
         pygame.draw.rect(screen, pygame.Color('white'), (208, 476, 62, 62), 0)
         pygame.draw.rect(screen, pygame.Color('white'), (271, 476, 62, 62), 0)
+        if alpha > 0:
+            alpha = max(alpha-4, 0)
+            txt_surf = orig_surf.copy()
+            alpha_surf.fill((255, 255, 255, alpha))
+            txt_surf.blit(alpha_surf, (0, 0),
+                          special_flags=pygame.BLEND_RGBA_MULT)
+        screen.blit(txt_surf, (363, 476))
     else:
         pygame.draw.rect(screen, pygame.Color('white'), (670, 476, 62, 62), 0)
         pygame.draw.rect(screen, pygame.Color('white'), (733, 476, 62, 62), 0)
+        if alpha > 0:
+            alpha = max(alpha-4, 0)
+            txt_surf = orig_surf.copy()
+            alpha_surf.fill((255, 255, 255, alpha))
+            txt_surf.blit(alpha_surf, (0, 0),
+                          special_flags=pygame.BLEND_RGBA_MULT)
+        screen.blit(txt_surf, (363, 476))
     kub.brosok()
     if pygame.mouse.get_focused():
         all_sprites1.draw(screen)
         all_sprites1.update()
     pygame.display.flip()
+    clock.tick(30)
 pygame.quit()
