@@ -57,14 +57,16 @@ class Board:
         self.top = top
         self.cell_size = cell_size
 
-    def hod(self, kletk, cvet):
+    def hod(self, kletk, cvet, kub):
+        f = kub != 0
+        f1 = cherniy[kletk - kub - 1] == 0
         if cvet == 0:
-            if cherniy[kletk - 2] == 0:
+            if (kletk - kub - 1 >= 0) and f1 and f:
                 return True
             else:
                 return False
         else:
-            if beliy[kletk] == 0:
+            if (kletk + kub - 1 < 24) and (beliy[kletk + kub - 1] == 0) and f:
                 return True
             else:
                 return False
@@ -79,17 +81,17 @@ class Board:
             else:
                 return False
 
-    def vozvrat(self, kletk, cvet):
+    def vozvrat(self, kletk, cvet, kub):
         if cvet == 0:
             beliy[kletk - 1] -= 1
-            beliy[kletk - 2] += 1
-            return (beliy[kletk - 2] - 1)
+            beliy[kletk - kub - 1] += 1
+            return (beliy[kletk - kub - 1] - 1)
         else:
             cherniy[kletk - 1] -= 1
-            cherniy[kletk] += 1
-            return (cherniy[kletk] - 1)
+            cherniy[kletk + kub - 1] += 1
+            return (cherniy[kletk + kub - 1] - 1)
 
-    def spis(self, kletk, a, cvet):
+    def spis(self, kletk, a, cvet, kub):
         if a == 0:
             if cvet == 0:
                 return (beliy[kletk - 1] - 1)
@@ -97,9 +99,23 @@ class Board:
                 return (cherniy[kletk - 1] - 1)
         else:
             if cvet == 0:
-                return (beliy[kletk - 2] + 1)
+                if ((kletk - kub - 1) >= 0) and (kub != 0):
+                    m = (beliy[kletk - kub - 1] + 1) < 8
+                else:
+                    return False
+                if m:
+                    return True
+                else:
+                    return False
             else:
-                return (cherniy[kletk] + 1)
+                if ((kletk + kub - 1) < 24) and (kub != 0):
+                    m = (cherniy[kletk + kub - 1] + 1) < 8
+                else:
+                    return False
+                if m:
+                    return True
+                else:
+                    return False
 
 
 class Beliy(pygame.sprite.Sprite):
@@ -119,16 +135,23 @@ class Beliy(pygame.sprite.Sprite):
         self.perehod = False
         self.cvet = 0
         self.d = False
+        self.kub1 = 0
+        self.kub2 = 0
+
+    def cifri_s_kubika(self, kub1, kub2):
+        self.kub1 = kub1
+        self.kub2 = kub2
 
     def nagat(self, event):
-        s = Board.spis(self, self.kletk, 0, self.cvet)
-        k = Board.spis(self, self.kletk, 1, self.cvet)
+        s = Board.spis(self, self.kletk, 0, self.cvet, 0)
+        k = Board.spis(self, self.kletk, 1, self.cvet, self.kub1)
+        k1 = Board.spis(self, self.kletk, 1, self.cvet, self.kub2)
         if self.rect.collidepoint(event.pos):
             if self.rasp == 1:
-                if (self.rect.y == (42 + 62 * s)) and (k < 8):
+                if (self.rect.y == (42 + 62 * s)) and (k or k1):
                     self.f = True
             else:
-                if (self.rect.y == (910 - 62 * s)) and (k < 8):
+                if (self.rect.y == (910 - 62 * s)) and (k or k1):
                     self.f = True
 
     def on_board(self, event):
@@ -137,43 +160,87 @@ class Beliy(pygame.sprite.Sprite):
             self.rect.y = event.pos[1] - 20
 
     def otgat(self):
+        perviy = Board.hod(self, self.kletk, self.cvet, self.kub1)
+        vtoroy = Board.hod(self, self.kletk, self.cvet, self.kub2)
+        self.perviy1 = False
+        self.vtoroy1 = False
         self.hod_prois = False
-        if self.kletk == 13:
-            self.rasp = 0
         if self.rasp == 1:
-            a = Board.hod(self, self.kletk, self.cvet)
-            a1 = self.x - 62
-            t = a1 - 61 <= self.rect.x < a1 + 62
-            m = 42 <= self.rect.y <= 476
-            if t and m and a:
-                self.hod_prois = True
-                hod = Board.vozvrat(self, self.kletk, self.cvet)
-                self.kletk -= 1
-                self.x = a1
-                if self.kletk == 18:
-                    self.x = 394
-                self.y = hod * 62 + 42
+            if perviy:
+                a1 = self.x - 62 * self.kub1
+                if (self.kletk >= 19) and (self.kletk - self.kub1 < 19):
+                    a1 -= 90
+                m = 42 <= self.rect.y <= 476
+                if (self.kletk >= 13) and (self.kletk - self.kub1 < 13):
+                    a1 = 84 + abs(62 * (self.kletk - self.kub1 - 13 + 1))
+                    m = 538 <= self.rect.y <= 910
+                t = a1 - 61 <= self.rect.x < a1 + 62
+                if t and m:
+                    self.perviy1 = True
+                    hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub1)
+                    self.kletk -= self.kub1
+                    self.x = a1
+                    self.y = hod * 62 + 42
+                    if (self.kletk + self.kub1 >= 13) and (self.kletk < 13):
+                        self.y = 910 - hod * 62
+                        self.rasp = 0
+            if vtoroy:
+                a1 = self.x - 62 * self.kub2
+                if (self.kletk >= 19) and (self.kletk - self.kub2 < 19):
+                    a1 -= 90
+                m = 42 <= self.rect.y <= 476
+                if (self.kletk >= 13) and (self.kletk - self.kub2 < 13):
+                    a1 = 84 + abs(62 * (self.kletk - self.kub2 - 13 + 1))
+                    m = 538 <= self.rect.y <= 910
+                t = a1 - 61 <= self.rect.x < a1 + 62
+                if t and m:
+                    self.vtoroy1 = True
+                    hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub2)
+                    self.kletk -= self.kub2
+                    self.x = a1
+                    self.y = hod * 62 + 42
+                    if (self.kletk + self.kub2 >= 13) and (self.kletk < 13):
+                        self.y = 910 - hod * 62
+                        self.rasp = 0
         else:
-            a = Board.hod(self, self.kletk, self.cvet)
-            a1 = self.x + 62
-            t = a1 - 61 <= self.rect.x < a1 + 62
-            m = 538 <= self.rect.y <= 910
-            if t and m and a:
-                self.hod_prois = True
-                hod = Board.vozvrat(self, self.kletk, self.cvet)
-                self.kletk -= 1
-                self.x = a1
-                if self.kletk == 12:
-                    self.x -= 62
-                elif self.kletk == 6:
-                    self.x = 546
-                self.y = 910 - hod * 62
-            else:
-                if self.kletk == 13:
-                    self.rasp = 1
+            if perviy:
+                a1 = self.x + 62 * self.kub1
+                if (self.kletk >= 7) and (self.kletk - self.kub1 < 7):
+                    a1 += 90
+                t = a1 - 61 <= self.rect.x < a1 + 62
+                m = 538 <= self.rect.y <= 910
+                if t and m:
+                    self.perviy1 = True
+                    hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub1)
+                    self.kletk -= self.kub1
+                    self.x = a1
+                    self.y = 910 - hod * 62
+            if vtoroy:
+                a1 = self.x + 62 * self.kub2
+                if (self.kletk >= 7) and (self.kletk - self.kub2 < 7):
+                    a1 += 90
+                t = a1 - 61 <= self.rect.x < a1 + 62
+                m = 538 <= self.rect.y <= 910
+                if t and m:
+                    self.vtoroy1 = True
+                    hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub2)
+                    self.kletk -= self.kub2
+                    self.x = a1
+                    self.y = 910 - hod * 62
 
+        if self.kub1 == 0 and self.kub2 == 0:
+            self.hod_prois = True
         self.rect.topleft = self.x, self.y
         self.f = False
+
+    def odin_hod(self):
+        if self.perviy1 or self.vtoroy1:
+            if self.perviy1:
+                return 1
+            elif self.vtoroy1:
+                return 2
+        else:
+            return 3
 
     def game_process(self):
         return self.hod_prois
@@ -195,15 +262,20 @@ class Cherniy(pygame.sprite.Sprite):
         self.kletk = kletk
         self.cvet = 1
 
+    def cifri_s_kubika(self, kub1, kub2):
+        self.kub1 = kub1
+        self.kub2 = kub2
+
     def nagat(self, event):
-        s = Board.spis(self, self.kletk, 0, self.cvet)
-        k = Board.spis(self, self.kletk, 1, self.cvet)
+        s = Board.spis(self, self.kletk, 0, self.cvet, 0)
+        k = Board.spis(self, self.kletk, 1, self.cvet, self.kub1)
+        k1 = Board.spis(self, self.kletk, 1, self.cvet, self.kub2)
         if self.rect.collidepoint(event.pos):
             if self.rasp == 1:
-                if (self.rect.y == (42 + 62 * s)) and (k < 8):
+                if (self.rect.y == (42 + 62 * s)) and (k or k1):
                     self.f = True
             else:
-                if (self.rect.y == (910 - 62 * s)) and (k < 8):
+                if (self.rect.y == (910 - 62 * s)) and (k or k1):
                     self.f = True
 
     def on_board(self, event):
@@ -212,43 +284,89 @@ class Cherniy(pygame.sprite.Sprite):
             self.rect.y = event.pos[1] - 20
 
     def otgat(self):
+        perviy = Board.hod(self, self.kletk, self.cvet, self.kub1)
+        vtoroy = Board.hod(self, self.kletk, self.cvet, self.kub2)
+        self.perviy1 = False
+        self.vtoroy1 = False
         self.hod_prois = False
-        if self.kletk == 12:
-            self.rasp = 1
         if self.rasp == 1:
-            a = Board.hod(self, self.kletk, self.cvet)
-            a1 = self.x + 62
-            t = a1 - 61 <= self.rect.x < a1 + 62
-            m = self.rect.y <= 476
-            if t and m and a:
-                self.hod_prois = True
-                hod = Board.vozvrat(self, self.kletk, self.cvet)
-                self.kletk += 1
-                self.x = a1
-                if self.kletk == 19:
-                    self.x = 546
-                elif self.kletk == 13:
-                    self.x -= 62
-                self.y = hod * 62 + 42
-            else:
-                if self.kletk == 12:
-                    self.rasp = 0
+            if perviy:
+                a1 = self.x + 62 * self.kub1
+                if (self.kletk <= 18) and (self.kletk + self.kub1 > 18):
+                    a1 += 90
+                t = a1 - 61 <= self.rect.x < a1 + 62
+                m = m = 42 <= self.rect.y <= 476
+                if t and m:
+                    self.perviy1 = True
+                    hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub1)
+                    self.kletk += self.kub1
+                    self.x = a1
+            if vtoroy:
+                a1 = self.x + 62 * self.kub2
+                if (self.kletk <= 18) and (self.kletk + self.kub2 > 18):
+                    a1 += 90
+                t = a1 - 61 <= self.rect.x < a1 + 62
+                m = m = 42 <= self.rect.y <= 476
+                if t and m:
+                    self.vtoroy1 = True
+                    hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub2)
+                    self.kletk += self.kub2
+                    self.x = a1
+                    self.y = hod * 62 + 42
+                else:
+                    if self.kletk == 12:
+                        self.rasp = 0
         else:
-            a = Board.hod(self, self.kletk, self.cvet)
-            a1 = self.x - 62
-            t = a1 - 61 <= self.rect.x < a1 + 62
-            m = 538 <= self.rect.y
-            if t and m and a:
-                self.hod_prois = True
-                hod = Board.vozvrat(self, self.kletk, self.cvet)
-                self.kletk += 1
-                self.x = a1
-                if self.kletk == 7:
-                    self.x = 394
-                self.y = 910 - hod * 62
+            if perviy:
+                a1 = self.x - 62 * self.kub1
+                if (self.kletk <= 6) and (self.kletk + self.kub1 > 6):
+                    a1 -= 90
+                m = 538 <= self.rect.y <= 910
+                if (self.kletk <= 12) and (self.kletk + self.kub1 > 12):
+                    a1 = 84 + abs(62 * (13 + self.kub1 - self.kletk - 2))
+                    m = 42 <= self.rect.y <= 476
+                t = a1 - 61 <= self.rect.x < a1 + 62
+                if t and m:
+                    self.perviy1 = True
+                    hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub1)
+                    self.kletk += self.kub1
+                    self.x = a1
+                    self.y = 910 - hod * 62
+                    if (self.kletk - self.kub1 <= 12) and (self.kletk > 12):
+                        self.y = hod * 62 + 42
+                        self.rasp = 1
+            if vtoroy:
+                a1 = self.x - 62 * self.kub2
+                if (self.kletk <= 6) and (self.kletk + self.kub2 > 6):
+                    a1 -= 90
+                m = 538 <= self.rect.y <= 910
+                if (self.kletk <= 12) and (self.kletk + self.kub2 > 12):
+                    a1 = 84 + abs(62 * (13 + self.kub2 - self.kletk - 2))
+                    m = 42 <= self.rect.y <= 476
+                t = a1 - 61 <= self.rect.x < a1 + 62
+                if t and m:
+                    self.vtoroy1 = True
+                    hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub2)
+                    self.kletk += self.kub2
+                    self.x = a1
+                    self.y = 910 - hod * 62
+                    if (self.kletk - self.kub2 <= 12) and (self.kletk > 12):
+                        self.y = hod * 62 + 42
+                        self.rasp = 1
 
+        if self.kub1 == 0 and self.kub2 == 0:
+            self.hod_prois = True
         self.rect.topleft = self.x, self.y
         self.f = False
+
+    def odin_hod(self):
+        if self.perviy1 or self.vtoroy1:
+            if self.perviy1:
+                return 1
+            elif self.vtoroy1:
+                return 2
+        else:
+            return 3
 
     def game_process(self):
         return self.hod_prois
@@ -462,32 +580,47 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if nomer_hoda % 2 == 1:
                 for k in all_sprites2:
+                    k.cifri_s_kubika(kub1, kub2)
+                for k in all_sprites2:
                     k.nagat(event)
             else:
+                for k in all_sprites3:
+                    k.cifri_s_kubika(kub1, kub2)
                 for k in all_sprites3:
                     k.nagat(event)
         if event.type == pygame.MOUSEMOTION:
             for i in all_sprites1:
                 i.cursor(event)
 
-            for k in all_sprites2:
-                k.on_board(event)
+            if nomer_hoda % 2 == 1:
+                for k in all_sprites2:
+                    k.on_board(event)
 
-            for k in all_sprites3:
-                k.on_board(event)
+            else:
+                for k in all_sprites3:
+                    k.on_board(event)
         if event.type == pygame.MOUSEBUTTONUP:
-            for k in all_sprites2:
-                k.otgat()
-                hod_prois += k.game_process()
-                kub1 = choice((1, 2, 3, 4, 5, 6))
-                kub2 = choice((1, 2, 3, 4, 5, 6))
+            if nomer_hoda % 2 == 1:
+                for k in all_sprites2:
+                    k.otgat()
+                    hod_prois += k.game_process()
+                    if k.odin_hod() == 1:
+                        kub1 = 0
+                    elif k.odin_hod() == 2:
+                        kub2 = 0
 
-            for k in all_sprites3:
-                k.otgat()
-                hod_prois += k.game_process()
+            else:
+                for k in all_sprites3:
+                    k.otgat()
+                    hod_prois += k.game_process()
+                    if k.odin_hod() == 1:
+                        kub1 = 0
+                    elif k.odin_hod() == 2:
+                        kub2 = 0
+
+            if hod_prois >= 1:
                 kub1 = choice((1, 2, 3, 4, 5, 6))
                 kub2 = choice((1, 2, 3, 4, 5, 6))
-            if hod_prois >= 1:
                 if nomer_hoda % 2 == 1:
                     font = pygame.font.Font('freesansbold.ttf', 50)
                     orig_surf = font.render('Ход чёрных', True, (0, 0, 0))
@@ -505,7 +638,6 @@ while running:
                     alpha_surf = pygame.Surface(txt_surf.get_size(),
                                                 pygame.SRCALPHA)
                     alpha = 255
-
                 kub = kubik(kub1, kub2, cvet)
     if hod_prois >= 1:
         nomer_hoda += 1
@@ -521,7 +653,7 @@ while running:
         pygame.draw.rect(screen, pygame.Color('white'), (208, 476, 62, 62), 0)
         pygame.draw.rect(screen, pygame.Color('white'), (271, 476, 62, 62), 0)
         if alpha > 0:
-            alpha = max(alpha-4, 0)
+            alpha = max(alpha - 4, 0)
             txt_surf = orig_surf.copy()
             alpha_surf.fill((255, 255, 255, alpha))
             txt_surf.blit(alpha_surf, (0, 0),
@@ -531,13 +663,18 @@ while running:
         pygame.draw.rect(screen, pygame.Color('white'), (670, 476, 62, 62), 0)
         pygame.draw.rect(screen, pygame.Color('white'), (733, 476, 62, 62), 0)
         if alpha > 0:
-            alpha = max(alpha-4, 0)
+            alpha = max(alpha - 4, 0)
             txt_surf = orig_surf.copy()
             alpha_surf.fill((255, 255, 255, alpha))
             txt_surf.blit(alpha_surf, (0, 0),
                           special_flags=pygame.BLEND_RGBA_MULT)
         screen.blit(txt_surf, (363, 476))
     kub.brosok()
+    if (kub1 == 0) and (kub2 == 0):
+        font = pygame.font.Font('freesansbold.ttf', 50)
+        orig_surf = font.render('Нажмите для следующего хода', True,
+                                (140, 0, 0))
+        screen.blit(orig_surf, (93, 476))
     if pygame.mouse.get_focused():
         all_sprites1.draw(screen)
         all_sprites1.update()
