@@ -89,6 +89,7 @@ class Board:
         else:
             cherniy[kletk - 1] -= 1
             cherniy[kletk + kub - 1] += 1
+            print(cherniy[kletk + kub - 1] - 1)
             return (cherniy[kletk + kub - 1] - 1)
 
     def spis(self, kletk, a, cvet, kub):
@@ -295,18 +296,19 @@ class Cherniy(pygame.sprite.Sprite):
                 if (self.kletk <= 18) and (self.kletk + self.kub1 > 18):
                     a1 += 90
                 t = a1 - 61 <= self.rect.x < a1 + 62
-                m = m = 42 <= self.rect.y <= 476
+                m = 42 <= self.rect.y <= 476
                 if t and m:
                     self.perviy1 = True
                     hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub1)
                     self.kletk += self.kub1
                     self.x = a1
+                    self.y = hod * 62 + 42
             if vtoroy:
                 a1 = self.x + 62 * self.kub2
                 if (self.kletk <= 18) and (self.kletk + self.kub2 > 18):
                     a1 += 90
                 t = a1 - 61 <= self.rect.x < a1 + 62
-                m = m = 42 <= self.rect.y <= 476
+                m = 42 <= self.rect.y <= 476
                 if t and m:
                     self.vtoroy1 = True
                     hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub2)
