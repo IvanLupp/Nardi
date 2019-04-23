@@ -7,6 +7,8 @@ size = 1000, 1000
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("Нарды")
 color = pygame.Color('white')
+posic1 = 0
+posic2 = 0
 
 
 def load_image(name, colorkey=None):
@@ -33,10 +35,6 @@ class Board:
         self.left = 10
         self.top = 10
         self.cell_size = 30
-        global posic1
-        posic1 = [0]
-        global posic2
-        posic2 = [0]
         global beliy
         beliy = [0, 0, 0, 0, 0, 5, 0, 3, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0,
                  0, 0, 0, 0, 0, 2]
@@ -59,37 +57,59 @@ class Board:
 
     def hod(self, kletk, cvet, kub):
         f = kub != 0
-        f1 = cherniy[kletk - kub - 1] == 0
         if cvet == 0:
+            if not(kletk - kub - 1 >= 24):
+                f1 = cherniy[kletk - kub - 1] <= 1
+            else:
+                f1 = True
             if (kletk - kub - 1 >= 0) and f1 and f:
                 return True
             else:
                 return False
         else:
-            if (kletk + kub - 1 < 24) and (beliy[kletk + kub - 1] == 0) and f:
+            if not(kletk + kub - 1 >= 24):
+                f1 = beliy[kletk + kub - 1] <= 1
+            else:
+                f1 = True
+            if (kletk + kub - 1 < 24) and f1 and f:
                 return True
             else:
                 return False
 
-    def poed(self, kletk, cvet):
+    def poed(self, kletk, cvet, kub):
+        global posic1
+        global posic2
         if cvet == 0:
-            if cherniy[kletk - 3] == 1:
-                posic1[0] += 1
+            if (cherniy[kletk - kub - 1] == 1) and (posic1 - 1 <= 8):
+                posic1 += 1
+                cherniy[kletk - kub - 1] -= 1
+                return True
+            else:
+                return False
         else:
-            if beliy[kletk] == 1:
+            if (beliy[kletk + kub - 1] == 1) and (posic2 - 1 <= 8):
+                posic2 += 1
+                beliy[kletk + kub - 1] -= 1
                 return True
             else:
                 return False
 
     def vozvrat(self, kletk, cvet, kub):
+        global posic1
+        global posic2
         if cvet == 0:
-            beliy[kletk - 1] -= 1
+            if kletk != 25:
+                beliy[kletk - 1] -= 1
+            else:
+                posic2 -= 1
             beliy[kletk - kub - 1] += 1
             return (beliy[kletk - kub - 1] - 1)
         else:
-            cherniy[kletk - 1] -= 1
+            if kletk != 0:
+                cherniy[kletk - 1] -= 1
+            else:
+                posic1 -= 1
             cherniy[kletk + kub - 1] += 1
-            print(cherniy[kletk + kub - 1] - 1)
             return (cherniy[kletk + kub - 1] - 1)
 
     def spis(self, kletk, a, cvet, kub):
@@ -118,6 +138,12 @@ class Board:
                 else:
                     return False
 
+    def return_posic(self, cvet):
+        if cvet == 1:
+            return posic1
+        else:
+            return posic2
+
 
 class Beliy(pygame.sprite.Sprite):
     image = load_image("beliy.png")
@@ -144,15 +170,21 @@ class Beliy(pygame.sprite.Sprite):
         self.kub2 = kub2
 
     def nagat(self, event):
-        s = Board.spis(self, self.kletk, 0, self.cvet, 0)
         k = Board.spis(self, self.kletk, 1, self.cvet, self.kub1)
         k1 = Board.spis(self, self.kletk, 1, self.cvet, self.kub2)
+        if self.kletk != 25:
+            s = Board.spis(self, self.kletk, 0, self.cvet, 0)
+            s1 = (42 + 62 * s)
+            s2 = (910 - 62 * s)
+        else:
+            posic = Board.return_posic(self, self.cvet)
+            s1 = 42 + 62 * (posic - 1)
         if self.rect.collidepoint(event.pos):
             if self.rasp == 1:
-                if (self.rect.y == (42 + 62 * s)) and (k or k1):
+                if (self.rect.y == s1) and (k or k1):
                     self.f = True
             else:
-                if (self.rect.y == (910 - 62 * s)) and (k or k1):
+                if (self.rect.y == s2) and (k or k1):
                     self.f = True
 
     def on_board(self, event):
@@ -166,6 +198,7 @@ class Beliy(pygame.sprite.Sprite):
         self.perviy1 = False
         self.vtoroy1 = False
         self.hod_prois = False
+        self.poed = False
         if self.rasp == 1:
             if perviy:
                 a1 = self.x - 62 * self.kub1
@@ -175,17 +208,21 @@ class Beliy(pygame.sprite.Sprite):
                 if (self.kletk >= 13) and (self.kletk - self.kub1 < 13):
                     a1 = 84 + abs(62 * (self.kletk - self.kub1 - 13 + 1))
                     m = 538 <= self.rect.y <= 910
+                if self.kletk == 25:
+                    a1 = 918 - 62 * self.kub1
                 t = a1 - 61 <= self.rect.x < a1 + 62
                 if t and m:
                     self.perviy1 = True
                     hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub1)
+                    self.poed = Board.poed(self, self.kletk, self.cvet,
+                                           self.kub1)
                     self.kletk -= self.kub1
                     self.x = a1
                     self.y = hod * 62 + 42
                     if (self.kletk + self.kub1 >= 13) and (self.kletk < 13):
                         self.y = 910 - hod * 62
                         self.rasp = 0
-            if vtoroy:
+            if vtoroy and not(self.perviy1):
                 a1 = self.x - 62 * self.kub2
                 if (self.kletk >= 19) and (self.kletk - self.kub2 < 19):
                     a1 -= 90
@@ -193,10 +230,14 @@ class Beliy(pygame.sprite.Sprite):
                 if (self.kletk >= 13) and (self.kletk - self.kub2 < 13):
                     a1 = 84 + abs(62 * (self.kletk - self.kub2 - 13 + 1))
                     m = 538 <= self.rect.y <= 910
+                if self.kletk == 25:
+                    a1 = 918 - 62 * self.kub2
                 t = a1 - 61 <= self.rect.x < a1 + 62
                 if t and m:
                     self.vtoroy1 = True
                     hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub2)
+                    self.poed = Board.poed(self, self.kletk, self.cvet,
+                                           self.kub2)
                     self.kletk -= self.kub2
                     self.x = a1
                     self.y = hod * 62 + 42
@@ -213,10 +254,12 @@ class Beliy(pygame.sprite.Sprite):
                 if t and m:
                     self.perviy1 = True
                     hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub1)
+                    self.poed = Board.poed(self, self.kletk, self.cvet,
+                                           self.kub1)
                     self.kletk -= self.kub1
                     self.x = a1
                     self.y = 910 - hod * 62
-            if vtoroy:
+            if vtoroy and not(self.perviy1):
                 a1 = self.x + 62 * self.kub2
                 if (self.kletk >= 7) and (self.kletk - self.kub2 < 7):
                     a1 += 90
@@ -225,6 +268,8 @@ class Beliy(pygame.sprite.Sprite):
                 if t and m:
                     self.vtoroy1 = True
                     hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub2)
+                    self.poed = Board.poed(self, self.kletk, self.cvet,
+                                           self.kub2)
                     self.kletk -= self.kub2
                     self.x = a1
                     self.y = 910 - hod * 62
@@ -242,6 +287,22 @@ class Beliy(pygame.sprite.Sprite):
                 return 2
         else:
             return 3
+
+    def poed_fish(self):
+        return self.poed
+
+    def return_kletk(self):
+        if self.poed:
+            return self.kletk
+
+    def perenos(self, kletk_perenos):
+        if self.kletk == kletk_perenos:
+            posic = Board.return_posic(self, self.cvet)
+            self.rasp = 1
+            self.kletk = 25
+            self.x = 472
+            self.y = 42 + 62 * (posic - 1)
+            self.rect.topleft = self.x, self.y
 
     def game_process(self):
         return self.hod_prois
@@ -271,12 +332,19 @@ class Cherniy(pygame.sprite.Sprite):
         s = Board.spis(self, self.kletk, 0, self.cvet, 0)
         k = Board.spis(self, self.kletk, 1, self.cvet, self.kub1)
         k1 = Board.spis(self, self.kletk, 1, self.cvet, self.kub2)
+        if self.kletk != 0:
+            s = Board.spis(self, self.kletk, 0, self.cvet, 0)
+            s1 = (42 + 62 * s)
+            s2 = (910 - 62 * s)
+        else:
+            posic = Board.return_posic(self, self.cvet)
+            s2 = 910 - 62 * (posic - 1)
         if self.rect.collidepoint(event.pos):
             if self.rasp == 1:
-                if (self.rect.y == (42 + 62 * s)) and (k or k1):
+                if (self.rect.y == s1) and (k or k1):
                     self.f = True
             else:
-                if (self.rect.y == (910 - 62 * s)) and (k or k1):
+                if (self.rect.y == s2) and (k or k1):
                     self.f = True
 
     def on_board(self, event):
@@ -290,6 +358,7 @@ class Cherniy(pygame.sprite.Sprite):
         self.perviy1 = False
         self.vtoroy1 = False
         self.hod_prois = False
+        self.poed = False
         if self.rasp == 1:
             if perviy:
                 a1 = self.x + 62 * self.kub1
@@ -300,10 +369,12 @@ class Cherniy(pygame.sprite.Sprite):
                 if t and m:
                     self.perviy1 = True
                     hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub1)
+                    self.poed = Board.poed(self, self.kletk, self.cvet,
+                                           self.kub1)
                     self.kletk += self.kub1
                     self.x = a1
                     self.y = hod * 62 + 42
-            if vtoroy:
+            if vtoroy and not(self.perviy1):
                 a1 = self.x + 62 * self.kub2
                 if (self.kletk <= 18) and (self.kletk + self.kub2 > 18):
                     a1 += 90
@@ -312,6 +383,8 @@ class Cherniy(pygame.sprite.Sprite):
                 if t and m:
                     self.vtoroy1 = True
                     hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub2)
+                    self.poed = Board.poed(self, self.kletk, self.cvet,
+                                           self.kub2)
                     self.kletk += self.kub2
                     self.x = a1
                     self.y = hod * 62 + 42
@@ -327,17 +400,21 @@ class Cherniy(pygame.sprite.Sprite):
                 if (self.kletk <= 12) and (self.kletk + self.kub1 > 12):
                     a1 = 84 + abs(62 * (13 + self.kub1 - self.kletk - 2))
                     m = 42 <= self.rect.y <= 476
+                if self.kletk == 0:
+                    a1 = 918 - 62 * self.kub1
                 t = a1 - 61 <= self.rect.x < a1 + 62
                 if t and m:
                     self.perviy1 = True
                     hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub1)
+                    self.poed = Board.poed(self, self.kletk, self.cvet,
+                                           self.kub1)
                     self.kletk += self.kub1
                     self.x = a1
                     self.y = 910 - hod * 62
                     if (self.kletk - self.kub1 <= 12) and (self.kletk > 12):
                         self.y = hod * 62 + 42
                         self.rasp = 1
-            if vtoroy:
+            if vtoroy and not(self.perviy1):
                 a1 = self.x - 62 * self.kub2
                 if (self.kletk <= 6) and (self.kletk + self.kub2 > 6):
                     a1 -= 90
@@ -345,10 +422,14 @@ class Cherniy(pygame.sprite.Sprite):
                 if (self.kletk <= 12) and (self.kletk + self.kub2 > 12):
                     a1 = 84 + abs(62 * (13 + self.kub2 - self.kletk - 2))
                     m = 42 <= self.rect.y <= 476
+                if self.kletk == 0:
+                    a1 = 918 - 62 * self.kub2
                 t = a1 - 61 <= self.rect.x < a1 + 62
                 if t and m:
                     self.vtoroy1 = True
                     hod = Board.vozvrat(self, self.kletk, self.cvet, self.kub2)
+                    self.poed = Board.poed(self, self.kletk, self.cvet,
+                                           self.kub2)
                     self.kletk += self.kub2
                     self.x = a1
                     self.y = 910 - hod * 62
@@ -369,6 +450,22 @@ class Cherniy(pygame.sprite.Sprite):
                 return 2
         else:
             return 3
+
+    def poed_fish(self):
+        return self.poed
+
+    def return_kletk(self):
+        if self.poed:
+            return self.kletk
+
+    def perenos(self, kletk_perenos):
+        if self.kletk == kletk_perenos:
+            posic = Board.return_posic(self, self.cvet)
+            self.rasp = 0
+            self.kletk = 0
+            self.x = 472
+            self.y = 910 - 62 * (posic - 1)
+            self.rect.topleft = self.x, self.y
 
     def game_process(self):
         return self.hod_prois
@@ -568,6 +665,7 @@ alpha_surf = pygame.Surface(txt_surf.get_size(),
                             pygame.SRCALPHA)
 alpha = 255
 hod_prois = False
+perenos = 0
 
 pygame.mouse.set_cursor((8, 8), (0, 0), (0, 0, 0, 0, 0, 0, 0, 0),
                         (0, 0, 0, 0, 0, 0, 0, 0))
@@ -580,6 +678,9 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
+            pygame.mixer.init()
+            pygame.mixer.music.load('hod1.mp3')
+            pygame.mixer.music.play()
             if nomer_hoda % 2 == 1:
                 for k in all_sprites2:
                     k.cifri_s_kubika(kub1, kub2)
@@ -602,6 +703,9 @@ while running:
                 for k in all_sprites3:
                     k.on_board(event)
         if event.type == pygame.MOUSEBUTTONUP:
+            pygame.mixer.init()
+            pygame.mixer.music.load('hod.mp3')
+            pygame.mixer.music.play()
             if nomer_hoda % 2 == 1:
                 for k in all_sprites2:
                     k.otgat()
@@ -610,6 +714,14 @@ while running:
                         kub1 = 0
                     elif k.odin_hod() == 2:
                         kub2 = 0
+                    perenos += k.odin_hod()
+                if perenos % 3 != 0:
+                    for k in all_sprites2:
+                        kletk_perenos = k.return_kletk()
+                        for l in all_sprites3:
+                            l.perenos(kletk_perenos)
+                    else:
+                        perenos = 0
 
             else:
                 for k in all_sprites3:
@@ -619,6 +731,14 @@ while running:
                         kub1 = 0
                     elif k.odin_hod() == 2:
                         kub2 = 0
+                    perenos += k.odin_hod()
+                if perenos % 3 != 0:
+                    for k in all_sprites3:
+                        kletk_perenos = k.return_kletk()
+                        for l in all_sprites2:
+                            l.perenos(kletk_perenos)
+                    else:
+                        perenos = 0
 
             if hod_prois >= 1:
                 kub1 = choice((1, 2, 3, 4, 5, 6))
@@ -641,6 +761,9 @@ while running:
                                                 pygame.SRCALPHA)
                     alpha = 255
                 kub = kubik(kub1, kub2, cvet)
+                pygame.mixer.init()
+                pygame.mixer.music.load('brosok.mp3')
+                pygame.mixer.music.play()
     if hod_prois >= 1:
         nomer_hoda += 1
         hod_prois = False
