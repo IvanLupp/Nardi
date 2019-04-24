@@ -161,7 +161,6 @@ class Beliy(pygame.sprite.Sprite):
         self.kletk = kletk
         self.perehod = False
         self.cvet = 0
-        self.d = False
         self.kub1 = 0
         self.kub2 = 0
 
