@@ -419,7 +419,7 @@ class Cherniy(pygame.sprite.Sprite):
                     a1 -= 90
                 m = 538 <= self.rect.y <= 910
                 if (self.kletk <= 12) and (self.kletk + self.kub2 > 12):
-                    a1 = 84 + abs(62 * (self.kletk + self.kub1 - 13))
+                    a1 = 84 + abs(62 * (self.kletk + self.kub2 - 13))
                     m = 42 <= self.rect.y <= 476
                 if self.kletk == 0:
                     a1 = 918 - 62 * self.kub2
