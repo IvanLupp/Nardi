@@ -205,7 +205,7 @@ class Beliy(pygame.sprite.Sprite):
                     a1 -= 90
                 m = 42 <= self.rect.y <= 476
                 if (self.kletk >= 13) and (self.kletk - self.kub1 < 13):
-                    a1 = 84 + abs(62 * (self.kletk - self.kub1 - 13 + 1))
+                    a1 = 84 + abs(62 * (self.kletk - self.kub1 - 12))
                     m = 538 <= self.rect.y <= 910
                 if self.kletk == 25:
                     a1 = 918 - 62 * self.kub1
@@ -227,7 +227,7 @@ class Beliy(pygame.sprite.Sprite):
                     a1 -= 90
                 m = 42 <= self.rect.y <= 476
                 if (self.kletk >= 13) and (self.kletk - self.kub2 < 13):
-                    a1 = 84 + abs(62 * (self.kletk - self.kub2 - 13 + 1))
+                    a1 = 84 + abs(62 * (self.kletk - self.kub2 - 12))
                     m = 538 <= self.rect.y <= 910
                 if self.kletk == 25:
                     a1 = 918 - 62 * self.kub2
