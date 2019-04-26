@@ -613,6 +613,8 @@ sprite.image = sprite_image
 sprite.rect = sprite.image.get_rect()
 
 
+fishki = load_image("fishki.png")
+pygame.display.set_icon(fishki)
 sashkab1 = Beliy((84, 42), 1, 13)
 sashkab2 = Beliy((84, 104), 1, 13)
 sashkab3 = Beliy((84, 166), 1, 13)
